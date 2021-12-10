@@ -1,0 +1,41 @@
+.idea/
+*.iml
+target
+**/target/
+.vscode/
+dist/
+node_modules/
+logs/
+**/webapp/static/
+**/webapp/index.html
+package-lock.json
+**/.dubbo/
+.class
+*.log
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Mac
+.DS_Store
+
+# Maven
+log/
+target/
+
+# Gradle
+.gradletasknamecache
+.gradle/
+
+bin/
+
+# vc
+.svn
+.git
+/src/generate/
