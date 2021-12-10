@@ -214,6 +214,8 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
         clazz.addImportedType(new FullyQualifiedJavaType("org.mybatis.dynamic.sql.select.SelectDSLCompleter"));
         clazz.addImportedType(new FullyQualifiedJavaType("org.mybatis.dynamic.sql.util.Buildable"));
         clazz.addImportedType(new FullyQualifiedJavaType("org.springframework.stereotype.Service"));
+        clazz.addImportedType(new FullyQualifiedJavaType("org.mybatis.dynamic.sql.select.SelectModel"));
+        clazz.addImportedType(new FullyQualifiedJavaType("com.inc.admin.dao.biz." + modelName + "Sql"));
         //转sql语句-end
 
         clazz.addImportedType(new FullyQualifiedJavaType("java.util.List"));
@@ -237,7 +239,10 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
         returnListType.addTypeArgument(dtoType);
         Parameter parameter = new Parameter(dtoType, "req");
         StringBuffer bodyLineSB = new StringBuffer();
-        //查询列表
+        bodyLineSB.append("PageHelper.startPage(req.getPageNo(), req.getPageSize());\n");
+        bodyLineSB.append("        SelectDSLCompleter completer = buildCompleter(req);\n");
+        bodyLineSB.append("        return new PageInfo<>(" + daoFieldName + ".select(completer));");
+        //分页查询
         addServiceImplMethod(clazz,
                 "listByPage",
                 parameter,
@@ -245,7 +250,57 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
                 returnListType,
                 bodyLineSB,
                 JavaVisibility.PUBLIC);
+        //查询list
+        returnListType = new FullyQualifiedJavaType("java.util.List");
+        returnListType.addTypeArgument(dtoType);
+        bodyLineSB = new StringBuffer("return " + daoFieldName + ".select(buildCompleter(req));");
+        addServiceImplMethod(clazz,
+                "getList",
+                parameter,
+                "查询list",
+                returnListType,
+                bodyLineSB,
+                JavaVisibility.PUBLIC);
+        //单个查询
+        bodyLineSB = new StringBuffer("Optional<" + modelName + "> " + firstCharToLowCase(modelName) + " = " + daoFieldName + ".selectOne(buildCompleter(req));\n");
+        bodyLineSB.append("        return book.orElse(null);");
+        addServiceImplMethod(clazz,
+                "getOne",
+                parameter,
+                "单个查询",
+                dtoType,
+                bodyLineSB,
+                JavaVisibility.PUBLIC);
+        //新增
+        bodyLineSB = new StringBuffer("return " + daoFieldName + ".insertSelective(req);");
+        addServiceImplMethod(clazz,
+                "insert",
+                parameter,
+                "新增",
+                new FullyQualifiedJavaType("int"),
+                bodyLineSB,
+                JavaVisibility.PUBLIC);
+        //根据主键更新不为空的值
+        bodyLineSB = new StringBuffer("return " + daoFieldName + ".updateByPrimaryKeySelective(req);");
+        addServiceImplMethod(clazz,
+                "update",
+                parameter,
+                "根据主键更新不为空的值",
+                new FullyQualifiedJavaType("int"),
+                bodyLineSB,
+                JavaVisibility.PUBLIC);
+        //根据主键删除该记录
+        parameter = new Parameter(new FullyQualifiedJavaType("java.lang.Integer"), "id");
+        bodyLineSB = new StringBuffer("return " + daoFieldName + ".deleteByPrimaryKey(id);");
+        addServiceImplMethod(clazz,
+                "delete",
+                parameter,
+                "根据主键删除该记录",
+                new FullyQualifiedJavaType("int"),
+                bodyLineSB,
+                JavaVisibility.PUBLIC);
         //构建查询条件
+        parameter = new Parameter(dtoType, "req");
         returnListType = new FullyQualifiedJavaType("org.mybatis.dynamic.sql.select.SelectDSLCompleter");
         bodyLineSB = new StringBuffer();
         bodyLineSB.append("SelectDSLCompleter completer = new SelectDSLCompleter() {\n" +
