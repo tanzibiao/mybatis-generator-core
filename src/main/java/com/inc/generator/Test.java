@@ -42,7 +42,6 @@ public class Test {
          * 3. 调用配置解析器创建配置对象
          */
         String configPath = System.getProperty("user.dir")+CONFIG_RESOURCE_BUNDLE.getString("config.path");//Test.class.getResource("/risk/generatorConfig-pls.xml").getPath();
-        //String configPath = System.getProperty("user.dir")+"/src/main/resources/risk/generatorConfig-pls.xml";//Test.class.getResource("/risk/generatorConfig-pls.xml").getPath();
         System.out.println(configPath);
         File configFile = new File(configPath);
         Configuration config = cp.parseConfiguration(configFile);

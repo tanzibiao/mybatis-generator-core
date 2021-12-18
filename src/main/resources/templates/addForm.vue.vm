@@ -8,7 +8,7 @@
 #foreach($column in $baseColumns)##
 #if($column.javaProperty != $pk)##
           <el-form-item label="${column.remarks}" prop="${column.javaProperty}">
-            <el-input v-model="data.${column.javaProperty}" auto-complete="off"></el-input>
+            <el-input size="mini" v-model="data.${column.javaProperty}" auto-complete="off"></el-input>
           </el-form-item>
 #end##
 #end##

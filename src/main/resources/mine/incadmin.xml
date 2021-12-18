@@ -31,6 +31,8 @@
             <!--&lt;!&ndash;controller的父类接口&ndash;&gt;-->
             <!--<property name="superController" value="org.aurochsframework.boot.commons.controller.GeneralCrudController"/>-->
         </plugin>
+        <plugin type="com.inc.generator.plugins.VueGenerator" >
+        </plugin>
         <!--自定义添加注释-->
         <commentGenerator type="com.inc.generator.plugins.CustomCommentGenerator">
             <property name="addRemarkComments" value="true"/>
