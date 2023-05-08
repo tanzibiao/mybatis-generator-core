@@ -1,11 +1,13 @@
 package com.inc.generator.plugins;
 
+import org.apache.commons.lang.StringUtils;
 import org.mybatis.generator.api.GeneratedJavaFile;
 import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.PluginAdapter;
 import org.mybatis.generator.api.dom.java.*;
 import org.mybatis.generator.internal.util.JavaBeansUtil;
+import org.mybatis.generator.internal.util.StringUtility;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -64,27 +66,6 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
     @Override
     public boolean validate(List<String> warnings) {
         boolean valid = true;
-
-       /* if (!stringHasValue(properties
-                .getProperty("targetProject"))) { //$NON-NLS-1$
-            warnings.add(getString("ValidationError.18", //$NON-NLS-1$
-                    "MapperConfigPlugin", //$NON-NLS-1$
-                    "targetProject")); //$NON-NLS-1$
-            valid = false;
-        }
-        if (!stringHasValue(properties.getProperty("servicePackage"))) { //$NON-NLS-1$
-            warnings.add(getString("ValidationError.18", //$NON-NLS-1$
-                    "MapperConfigPlugin", //$NON-NLS-1$
-                    "servicePackage")); //$NON-NLS-1$
-            valid = false;
-        }
-        if (!stringHasValue(properties.getProperty("serviceImplPackage"))) { //$NON-NLS-1$
-            warnings.add(getString("ValidationError.18", //$NON-NLS-1$
-                    "MapperConfigPlugin", //$NON-NLS-1$
-                    "serviceImplPackage")); //$NON-NLS-1$
-            valid = false;
-        }
-*/
         targetProject = properties.getProperty("targetProject");
         servicePackage = properties.getProperty("servicePackage");
         serviceImplPackage = properties.getProperty("serviceImplPackage");
@@ -134,7 +115,8 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
 
         serviceInterface.setVisibility(JavaVisibility.PUBLIC);
         serviceInterface.addImportedType(new FullyQualifiedJavaType("com.github.pagehelper.PageInfo"));
-        serviceInterface.addImportedType(new FullyQualifiedJavaType("com.inc.admin.domain.biz.Book"));
+        //"com.inc.admin.domain.biz.Book"
+        serviceInterface.addImportedType(new FullyQualifiedJavaType(introspectedTable.getBaseRecordType()));
         serviceInterface.addImportedType(new FullyQualifiedJavaType("java.util.List"));
         FullyQualifiedJavaType returnListType = new FullyQualifiedJavaType("com.github.pagehelper.PageInfo");
         FullyQualifiedJavaType dtoType = introspectedTable.getRules().calculateAllFieldsClass();
@@ -209,17 +191,10 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
         //字符util非空判断
         clazz.addImportedType(new FullyQualifiedJavaType("org.apache.commons.lang3.StringUtils"));
         //转sql语句-start
-        clazz.addImportedType(new FullyQualifiedJavaType("org.mybatis.dynamic.sql.SqlBuilder"));
-        clazz.addImportedType(new FullyQualifiedJavaType("org.mybatis.dynamic.sql.select.QueryExpressionDSL"));
-        clazz.addImportedType(new FullyQualifiedJavaType("org.mybatis.dynamic.sql.select.SelectDSLCompleter"));
-        clazz.addImportedType(new FullyQualifiedJavaType("org.mybatis.dynamic.sql.util.Buildable"));
         clazz.addImportedType(new FullyQualifiedJavaType("org.springframework.stereotype.Service"));
-        clazz.addImportedType(new FullyQualifiedJavaType("org.mybatis.dynamic.sql.select.SelectModel"));
-        clazz.addImportedType(new FullyQualifiedJavaType("com.inc.admin.dao.biz." + modelName + "Sql"));
         //转sql语句-end
 
         clazz.addImportedType(new FullyQualifiedJavaType("java.util.List"));
-        clazz.addImportedType(new FullyQualifiedJavaType("java.util.Optional"));
         clazz.addAnnotation("@Service(\"" + firstCharToLowCase(modelName) + "Service\")");
 
         String daoFieldType = introspectedTable.getMyBatis3JavaMapperType();
@@ -228,8 +203,12 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
         Field daoField = new Field(daoFieldName, new FullyQualifiedJavaType(daoFieldType));
         clazz.addImportedType(new FullyQualifiedJavaType(daoFieldType));
         clazz.addImportedType(new FullyQualifiedJavaType("javax.annotation.Resource"));
+        clazz.addImportedType(new FullyQualifiedJavaType("org.apache.commons.collections4.CollectionUtils"));
         //描述成员属性 的注解
         daoField.addAnnotation("@Resource");
+
+        FullyQualifiedJavaType conditionType = new FullyQualifiedJavaType(introspectedTable.getExampleType());
+        clazz.addImportedType(conditionType);
         //描述成员属性修饰符
         daoField.setVisibility(JavaVisibility.PRIVATE);
         clazz.addField(daoField);
@@ -240,8 +219,8 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
         Parameter parameter = new Parameter(dtoType, "req");
         StringBuffer bodyLineSB = new StringBuffer();
         bodyLineSB.append("PageHelper.startPage(req.getPageNo(), req.getPageSize());\n");
-        bodyLineSB.append("        SelectDSLCompleter completer = buildCompleter(req);\n");
-        bodyLineSB.append("        return new PageInfo<>(" + daoFieldName + ".select(completer));");
+        bodyLineSB.append("        " + conditionType.getShortName() + " condition = buildCondition(req);\n");
+        bodyLineSB.append("        return new PageInfo<>(" + daoFieldName + ".selectByExample(condition));");
         //分页查询
         addServiceImplMethod(clazz,
                 "listByPage",
@@ -253,7 +232,7 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
         //查询list
         returnListType = new FullyQualifiedJavaType("java.util.List");
         returnListType.addTypeArgument(dtoType);
-        bodyLineSB = new StringBuffer("return " + daoFieldName + ".select(buildCompleter(req));");
+        bodyLineSB = new StringBuffer("return " + daoFieldName + ".selectByExample(buildCondition(req));");
         addServiceImplMethod(clazz,
                 "getList",
                 parameter,
@@ -262,8 +241,11 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
                 bodyLineSB,
                 JavaVisibility.PUBLIC);
         //单个查询
-        bodyLineSB = new StringBuffer("Optional<" + modelName + "> " + firstCharToLowCase(modelName) + " = " + daoFieldName + ".selectOne(buildCompleter(req));\n");
-        bodyLineSB.append("        return book.orElse(null);");
+        bodyLineSB = new StringBuffer("List<" + modelName + "> lst = getList(req);\n");
+        bodyLineSB.append("        if (CollectionUtils.isEmpty(lst)) {\n" +
+                "            return null;\n" +
+                "        }\n" +
+                "        return lst.get(0);");
         addServiceImplMethod(clazz,
                 "getOne",
                 parameter,
@@ -299,45 +281,62 @@ public class ServiceAndControllerGeneratorPlugin extends PluginAdapter {
                 new FullyQualifiedJavaType("int"),
                 bodyLineSB,
                 JavaVisibility.PUBLIC);
+        
         //构建查询条件
         parameter = new Parameter(dtoType, "req");
-        returnListType = new FullyQualifiedJavaType("org.mybatis.dynamic.sql.select.SelectDSLCompleter");
-        bodyLineSB = new StringBuffer();
-        bodyLineSB.append("SelectDSLCompleter completer = new SelectDSLCompleter() {\n" +
-                "            @Override\n" +
-                "            public Buildable<SelectModel> apply(QueryExpressionDSL<SelectModel> selectModelQueryExpressionDSL) {\n" +
-                "                QueryExpressionDSL<SelectModel>.QueryExpressionWhereBuilder where = selectModelQueryExpressionDSL.where();\n");
-        List<IntrospectedColumn> allColumns = introspectedTable.getAllColumns();
-        for (IntrospectedColumn column : allColumns) {
-            String javaProperty = column.getJavaProperty();
-            String javaTypeShortName = column.getFullyQualifiedJavaType().getShortName();
-            FullyQualifiedJavaType javaType = column.getFullyQualifiedJavaType();
-            String getName = JavaBeansUtil.getGetterMethodName(javaProperty, javaType);
-            if (javaTypeShortName.equals("String")) {
-                bodyLineSB.append(
-                                "                String "+ javaProperty + " = req." + getName + "();\n" +
-                                "                if (StringUtils.isNotBlank(" + javaProperty + ")) {\n" +
-                                "                    where.and(" + modelName + "Sql." + javaProperty + ", SqlBuilder.isEqualTo(req." + getName + "()));\n" +
-                                "                }\n");
-            } else {
-                bodyLineSB.append(
-                                "                " + javaType.getShortName() + " "+ javaProperty + " = req." + getName + "();\n" +
-                                "                if (" + javaProperty + " != null) {\n" +
-                                "                    where.and(" + modelName + "Sql." + javaProperty + ", SqlBuilder.isEqualTo(req." + getName + "()));\n" +
-                                "                }\n");
-            }
+        String returnParam = firstCharToLowCase(conditionType.getShortName());
 
+        bodyLineSB = new StringBuffer();
+        bodyLineSB.append(conditionType.getShortName() + " " + returnParam + "= new " + conditionType.getShortName() + "();\n");
+        bodyLineSB.append("        " + conditionType.getShortName()+".Criteria criteria = " + returnParam + ".createCriteria();\n");
+        bodyLineSB.append("        if (req != null) {\n");
+        //主键查询条件
+        IntrospectedColumn pk = introspectedTable.getPrimaryKeyColumns().get(0);
+        String getterName = JavaBeansUtil.getGetterMethodName(pk.getJavaProperty(), pk.getFullyQualifiedJavaType());
+        if ("String".equals(pk.getFullyQualifiedJavaType().getShortName())) {
+            clazz.addImportedType(new FullyQualifiedJavaType("org.apache.commons.lang3.StringUtils"));
+            bodyLineSB.append("            if (StringUtils.isNotBlank(req."+ getterName +"())) {");
+            StringBuilder sb = new StringBuilder();
+            sb.append(pk.getJavaProperty());
+            sb.setCharAt(0, Character.toUpperCase(sb.charAt(0)));
+            bodyLineSB.append("criteria.and"+sb+"EqualTo(req."+getterName+"());");
+            bodyLineSB.append("}\n");
+        } else {
+            bodyLineSB.append("            if (req."+ getterName +"() != null) {");
+            StringBuilder sb = new StringBuilder();
+            sb.append(pk.getJavaProperty());
+            sb.setCharAt(0, Character.toUpperCase(sb.charAt(0)));
+            bodyLineSB.append("criteria.and"+sb+"EqualTo(req."+getterName+"());");
+            bodyLineSB.append("}\n");
         }
-        bodyLineSB.append(
-                "                return where;\n" +
-                "            }\n" +
-                "        };\n" +
-                "        return completer;");
+
+        //生成查询条件
+        for (IntrospectedColumn baseColumn : introspectedTable.getBaseColumns()) {
+            getterName = JavaBeansUtil.getGetterMethodName(baseColumn.getJavaProperty(), baseColumn.getFullyQualifiedJavaType());
+            if ("String".equals(baseColumn.getFullyQualifiedJavaType().getShortName())) {
+                clazz.addImportedType(new FullyQualifiedJavaType("org.apache.commons.lang3.StringUtils"));
+                bodyLineSB.append("            if (StringUtils.isNotBlank(req."+ getterName +"())) {");
+                StringBuilder sb = new StringBuilder();
+                sb.append(baseColumn.getJavaProperty());
+                sb.setCharAt(0, Character.toUpperCase(sb.charAt(0)));
+                bodyLineSB.append("criteria.and"+sb+"EqualTo(req."+getterName+"());");
+                bodyLineSB.append("}\n");
+            } else {
+                bodyLineSB.append("            if (req."+ getterName +"() != null) {");
+                StringBuilder sb = new StringBuilder();
+                sb.append(baseColumn.getJavaProperty());
+                sb.setCharAt(0, Character.toUpperCase(sb.charAt(0)));
+                bodyLineSB.append("criteria.and"+sb+"EqualTo(req."+getterName+"());");
+                bodyLineSB.append("        }\n");
+            }
+        }
+        bodyLineSB.append("        }\n");
+        bodyLineSB.append("        return " + returnParam + ";");
         addServiceImplMethod(clazz,
-                "buildCompleter",
+                "buildCondition",
                 parameter,
                 "构建查询条件",
-                returnListType,
+                conditionType,
                 bodyLineSB,
                 JavaVisibility.PRIVATE);
 

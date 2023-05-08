@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * @desc 重命名文件
  * @date 2021-12-10 20:17:23
  */
-public class RenameDynamicSqlSupportPlugin extends PluginAdapter {
+public class RenameMapperXmlPlugin extends PluginAdapter {
     private String replaceString;
     private Pattern pattern;
     @Override
@@ -22,7 +22,7 @@ public class RenameDynamicSqlSupportPlugin extends PluginAdapter {
         this.replaceString = this.properties.getProperty("replaceString");
         boolean valid = StringUtility.stringHasValue(this.replaceString);
         if (valid) {
-            this.pattern = Pattern.compile("DynamicSqlSupport");
+            this.pattern = Pattern.compile("Mapper");
         } else {
             if (!StringUtility.stringHasValue(this.replaceString)) {
                 warnings.add(Messages.getString("ValidationError.18", "RenameExampleClassPlugin", "replaceString"));
@@ -33,13 +33,8 @@ public class RenameDynamicSqlSupportPlugin extends PluginAdapter {
 
     @Override
     public void initialized(IntrospectedTable introspectedTable) {
-        // 更改实体类名称，例如：Menu => MenuDto
-        //String oldType = introspectedTable.getBaseRecordType();
-        //introspectedTable.setBaseRecordType(oldType + "Dto");
-
-        // 更改DynamicSqlSupport名称
-        String mapperType = introspectedTable.getMyBatisDynamicSqlSupportType();
+        String mapperType = introspectedTable.getMyBatis3XmlMapperFileName();
         Matcher matcher = this.pattern.matcher(mapperType);
-        introspectedTable.setMyBatisDynamicSqlSupportType(matcher.replaceAll(this.replaceString));
+        introspectedTable.setMyBatis3XmlMapperFileName(matcher.replaceAll(this.replaceString));
     }
 }

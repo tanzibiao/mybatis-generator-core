@@ -10,11 +10,6 @@
     <!-- 这里需要引入 动态sql相关的包-->
     <!-- https://mvnrepository.com/artifact/org.mybatis.dynamic-sql/mybatis-dynamic-sql -->
     <dependency>
-      <groupId>org.mybatis.dynamic-sql</groupId>
-      <artifactId>mybatis-dynamic-sql</artifactId>
-      <version>1.1.4</version>
-    </dependency>
-    <dependency>
       <groupId>org.mybatis.generator</groupId>
       <artifactId>mybatis-generator-core</artifactId>
       <version>1.4.0</version>

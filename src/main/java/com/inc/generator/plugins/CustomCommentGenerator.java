@@ -1,5 +1,6 @@
 package com.inc.generator.plugins;
 
+import org.apache.commons.lang.StringUtils;
 import org.mybatis.generator.api.CommentGenerator;
 import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
@@ -229,9 +230,15 @@ public class CustomCommentGenerator implements CommentGenerator {
         method.addJavaDocLine("/**"); //$NON-NLS-1$
         String methodName = method.getName();
         if (methodName.startsWith("set")) {
-            method.addJavaDocLine(" * 设置 " + getColRemarks(methodName.replaceFirst("set", ""), introspectedTable));
+            String remarks = getColRemarks(methodName.replaceFirst("set", ""), introspectedTable);
+            if (StringUtils.isNotBlank(remarks)) {
+                method.addJavaDocLine(" * 设置 " + remarks);
+            }
         } else if (methodName.startsWith("get")) {
-            method.addJavaDocLine(" * 获取 " + getColRemarks(methodName.replaceFirst("get", ""), introspectedTable));
+            String remarks = getColRemarks(methodName.replaceFirst("get", ""), introspectedTable);
+            if (StringUtils.isNotBlank(remarks)) {
+                method.addJavaDocLine(" * 获取 " + remarks);
+            }
         } else if (methodName.equals("count")) {
             method.addJavaDocLine(" * 查询 " + introspectedTable.getRemarks() + " 数量");
         } else if (methodName.equals("update")) {

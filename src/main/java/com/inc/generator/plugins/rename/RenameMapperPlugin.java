@@ -33,10 +33,6 @@ public class RenameMapperPlugin extends PluginAdapter {
 
     @Override
     public void initialized(IntrospectedTable introspectedTable) {
-        // 更改实体类名称，例如：Menu => MenuDto
-        //String oldType = introspectedTable.getBaseRecordType();
-        //introspectedTable.setBaseRecordType(oldType + "Dto");
-
         // 更改Mapper名称
         String mapperType = introspectedTable.getMyBatis3JavaMapperType();
         Matcher matcher = this.pattern.matcher(mapperType);

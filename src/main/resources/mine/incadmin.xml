@@ -6,15 +6,27 @@
 
 <generatorConfiguration>
     <!---Mybatis上下文-->
-    <context id="default" targetRuntime="MyBatis3DynamicSql" defaultModelType="flat">
+    <context id="MySqlContext" targetRuntime="MyBatis3" defaultModelType="flat">
         <!-- 当表名或者字段名为SQL关键字的时候，可以设置"autoDelimitKeywords"属性为true -->
-        <property name="autoDelimitKeywords" value="false"></property>
-        <!-- 此处是将UserMapper改名为UserDao 接口 当然 想改成什么都行~  -->
+        <property name="autoDelimitKeywords" value="false" />
+        <!-- 自定义分页 -->
+        <plugin type="com.inc.generator.plugins.PaginationPlugin" />
+        <!--生成@Mapper注解-->
+        <plugin type="org.mybatis.generator.plugins.MapperAnnotationPlugin" />
+        <!-- 自定义查询指定字段  -->
+<!--        <plugin type="org.mybatis.generator.custom.field.FieldsPlugin" />-->
+        <!-- 此处是将Example改名为Criteria 当然 想改成什么都行~    -->
+        <plugin type="org.mybatis.generator.plugins.RenameExampleClassPlugin">
+            <property name="searchString" value="Example$" />
+            <property name="replaceString" value="Criteria" />
+        </plugin>
+        <!-- 此处是将BookMapper.xml改名为BookDao.xml -->
+        <!--        <plugin type="com.inc.generator.plugins.rename.RenameMapperXmlPlugin">-->
+        <!--            <property name="replaceString" value="Dao" />-->
+        <!--        </plugin>-->
+        <!-- 此处是将BookMapper改名为BookDao 接口-->
         <plugin type="com.inc.generator.plugins.rename.RenameMapperPlugin">
             <property name="replaceString" value="Dao" />
-        </plugin>
-        <plugin type="com.inc.generator.plugins.rename.RenameDynamicSqlSupportPlugin">
-            <property name="replaceString" value="Sql" />
         </plugin>
         <plugin type="com.inc.generator.plugins.ServiceAndControllerGeneratorPlugin" >
             <property name="author" value="tanzibiao"/>
@@ -64,10 +76,9 @@
             <property name="enableSubPackages" value="true"/>
         </sqlMapGenerator>
         <!--mybatis的mapper接口-->
-        <javaClientGenerator targetPackage="com.inc.admin.dao.biz" targetProject="src/generate/java" type="ANNOTATEDMAPPER">
+        <javaClientGenerator targetPackage="com.inc.admin.dao.biz" targetProject="src/generate/java" type="XMLMAPPER">
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
-
 
         <!--要生成的表结构-->
         <table tableName="book" domainObjectName="Book"/>
